@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// Copyright (C) 2022
+// Copyright (C) 2022 Vamsi Alluri
+// Copyright (C) 2022 Dai Foundation
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -95,7 +96,7 @@ contract DssGateSuck {
     }
 
     // --- Events ---
-    event NewMax(uint256 max); // log when approved total changes
+    event File(bytes32 indexed what, uint256 data);
     event Draw(address indexed dst, uint256 amount); // log upon draw
 
     // --- UTILS ---
@@ -112,7 +113,7 @@ contract DssGateSuck {
     function file(bytes32 what, uint256 data) external auth {
         if (what == "max") {
             max = data; // update approved total amount
-            emit NewMax(data);
+            emit File(what, data);
         }
     }
 
