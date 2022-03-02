@@ -49,7 +49,7 @@ interface JoinLike {
   * does not check whether vat is live at deployment time
   * vat, and vow addresses cannot be updated after deployment
 */
-contract GateSuck {
+contract DssGateSuck {
     // --- Auth ---
     mapping (address => uint256) public wards;                                       // Addresses with admin authority
     event Rely(address indexed usr);
