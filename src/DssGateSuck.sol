@@ -137,7 +137,7 @@ contract DssGateSuck {
         fill = _add(fill, amt);
         require(max >= fill, "dss-gate/insufficient-allowance");
 
-        VatLike(vat).suck(address(vow), dst, amt);
+        VatLike(vat).suck(vow, dst, amt);
         emit Draw(dst, amt);
     }
 
