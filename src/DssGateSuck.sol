@@ -150,13 +150,4 @@ contract DssGateSuck {
     function recover(address join, uint256 amt) external {
         JoinLike(join).join(address(this), amt);
     }
-
-    // --- Vat Forwarders ---
-    /// Forward vat.heal() call
-    /// @dev Access to vat.heal() can be used appropriately by an integration
-    /// @dev when it maintains its own sin balance
-    /// @param rad dai amount
-    function heal(uint rad) external {
-        VatLike(vat).heal(rad);
-    }
 }
