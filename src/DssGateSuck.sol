@@ -18,7 +18,7 @@
 pragma solidity ^0.6.12;
 
 interface VatLike {
-    function heal(uint256) external;
+    function live() external returns (uint256);
     function suck(address, address, uint256) external;
     function dai(address) external view returns (uint256);
     function move(address, address, uint256) external;
@@ -123,6 +123,7 @@ contract DssGateSuck {
     /// @param amt dai amount in rad
     function suck(address dst, uint256 amt) public toll returns (bool) {
         require(max >= amt, "dss-gate/insufficient-allowance");
+        require(VatLike(vat).live() == 1, "dss-gate/vat-not-live");
 
         max = max - amt;
 
