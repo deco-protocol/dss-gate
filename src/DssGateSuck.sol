@@ -79,6 +79,14 @@ contract DssGateSuck {
     }
     modifier toll { require(bud[msg.sender] == 1, "bud/not-authorized"); _; }
 
+    // --- Math ---
+    function _add(uint x, uint y) internal pure returns (uint z) {
+        require((z = x + y) >= x);
+    }
+    function _sub(uint x, uint y) internal pure returns (uint z) {
+        require((z = x - y) <= x);
+    }
+
     /// maker protocol vat
     address public immutable vat;
     /// maker protocol vow
@@ -86,6 +94,8 @@ contract DssGateSuck {
 
     /// draw limit- total amount that can be drawn from vat.suck
     uint256 public max; // [rad]
+    // amount drawn- amount currently drawn and not put back
+    uint256 public fill = 0;
 
     constructor(address vat_, address vow_) public {
         wards[msg.sender] = 1;
@@ -122,10 +132,10 @@ contract DssGateSuck {
     /// @param dst who are you sucking to
     /// @param amt dai amount in rad
     function suck(address dst, uint256 amt) public toll returns (bool) {
-        require(max >= amt, "dss-gate/insufficient-allowance");
         require(VatLike(vat).live() == 1, "dss-gate/vat-not-live");
 
-        max = max - amt;
+        fill = _add(fill, amt);
+        require(max >= fill, "dss-gate/insufficient-allowance");
 
         VatLike(vat).suck(address(vow), dst, amt);
         emit Draw(dst, amt);
@@ -140,15 +150,22 @@ contract DssGateSuck {
 
     /// Repay dai (reverse suck)
     function blow(uint256 amt) external {
-        VatLike(vat).suck(msg.sender, address(vow), amt);
+        if (fill >= amt) {
+            fill = _sub(fill, amt);
+        }
+        VatLike(vat).move(msg.sender, vow, amt);
     }
 
     /// Recover ERC-20 Dai
     /// In case someone sends ERC-20 dai to this contract
-    /// allows joining it into this contract's balance in vat
+    /// send it to the surplus buffer
     /// @param join the address of the Dai Join adapter
     /// @param amt the amount of ERC dai to join [wad]
     function recover(address join, uint256 amt) external {
+        if (fill >= amt) {
+            fill = _sub(fill, amt);
+        }
         JoinLike(join).join(address(this), amt);
+        VatLike(vat).move(address(this), vow, amt);
     }
 }
