@@ -3,14 +3,18 @@ pragma solidity ^0.8.0;
 
 import "ds-test/test.sol";
 import "dss.git/vat.sol";
-import "../common/math.sol";
 import "../gate1.sol";
 import "./Vm.sol";
+import "./math.sol";
 
 contract TestVat is Vat {
     function mint(address usr, uint rad) public {
         dai[usr] += rad;
         debt += rad;
+    }
+
+    function try_cage() public {
+        live = 0;
     }
 }
 
@@ -249,6 +253,43 @@ contract IntegrationAuthApprovedGate1Test is DSTest, DSMath {
     function testCallerGov() public {
         gov.kiss(user1);
         assertEq(gate.bud(user1), 1);
+    }
+
+    // should fail kiss if withdrawAfter is in the future
+    function testFailWithdrawAfterFuture() public {
+        gov.kiss(user1);
+        assertEq(gate.bud(user1), 1);
+        
+        // move withdrawAfter to the future
+        gov.updateWithdrawAfter(gate.withdrawAfter() + 60 seconds);
+
+        gov.kiss(user2); // should fail
+    }
+
+    // should allow kiss if withdrawAfter is current
+    function testWithdrawAfterCurrent() public {
+        gov.kiss(user1);
+        assertEq(gate.bud(user1), 1);
+        
+        // move withdrawAfter to the future
+        gov.updateWithdrawAfter(gate.withdrawAfter() + 60 seconds);
+
+        vm.warp(block.timestamp + 60 seconds);
+
+        gov.kiss(user2); // should succeed
+    }
+
+    // should allow kiss if withdrawAfter is in the past
+    function testWithdrawAfterPast() public {
+        gov.kiss(user1);
+        assertEq(gate.bud(user1), 1);
+        
+        // move withdrawAfter to the future
+        gov.updateWithdrawAfter(gate.withdrawAfter() + 60 seconds);
+
+        vm.warp(block.timestamp + 120 seconds);
+
+        gov.kiss(user2); // should succeed
     }
 }
 
@@ -573,10 +614,22 @@ contract DaiDrawnGate1Test is DSTest, DSMath {
         assertEq(vat.dai(address(gate)), rad(25)); // backup balance: 25
     }
 
-    // gate suck interface works
+    // gate suck interface fails when vat is not live
+    function testFailGateSuckInterfaceVatNotLive() public {
+        // backup balance: 0
+        gov.updateApprovedTotal(rad(50)); // draw limit approved total: 50
+
+        vat.try_cage(); // cages vat and sets live flag to 0
+
+        user1.suck(address(0), address(user2), rad(10)); // draw: 10
+    }
+
+    // gate suck interface works when vat is live
     function testGateSuckInterface() public {
         // backup balance: 0
         gov.updateApprovedTotal(rad(50)); // draw limit approved total: 50
+
+        assertEq(vat.live(), 1); // vat is live
 
         user1.suck(address(0), address(user2), rad(10)); // draw: 10
         assertEq(vat.dai(address(user2)), rad(10)); // user2: 10
@@ -779,59 +832,3 @@ contract WithdrawAfterUpdateGate1Test is DSTest, DSMath {
     // todo should emit a new withdraw after event
 }
 
-// when heal is called
-contract VatForwarderHealGate1Test is DSTest, DSMath {
-    Vm vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-
-    TestVat vat;
-    MockVow vow;
-    Gate1 gate;
-    address me;
-
-    Integration user1;
-    Integration user2;
-
-    Gov public gov;
-    address public gov_addr;
-
-    function rad(uint256 amt_) public pure returns (uint256) {
-        return mulu(amt_, RAD);
-    }
-
-    function setUp() public {
-        vm.warp(1641400537);
-
-        me = address(this);
-        vat = new TestVat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
-        vat.rely(address(gate));
-        
-        gov = new Gov(gate);
-        gov_addr = address(gov);
-        gate.rely(gov_addr);
-        gate.deny(me);
-
-        user1 = new Integration(gate);
-        gov.kiss(address(user1)); // authorize user1
-        user2 = new Integration(gate);
-
-        vat.mint(address(gate), rad(100)); // mint dai to gate
-    }
-
-    // should fail if the amount exceeds sin balance
-    function testFailHealForward() public {
-        vat.suck(address(gate), address(gate), rad(50)); // generate sin on gate
-
-        gate.heal(rad(60));
-    }
-
-    // should reduce dai balance and sin balance
-    function testHealBalanceUpdate() public {
-        vat.suck(address(gate), address(gate), rad(50)); // generate sin on gate
-
-        gate.heal(rad(30));
-        assertEq(vat.dai(address(gate)), rad(120)); // 100 + 50 - 30
-        assertEq(vat.sin(address(gate)), rad(20)); // 50 - 30
-    }
-}

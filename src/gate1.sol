@@ -17,6 +17,7 @@
 pragma solidity ^0.8.0;
 
 abstract contract VatAbstract {
+    function live() external virtual view returns (uint256);
     function heal(uint256) external virtual;
     function suck(address, address, uint256) external virtual;
     function dai(address) external virtual view returns (uint256);
@@ -78,6 +79,9 @@ contract Gate1 {
     function kiss(address _a) external auth {
         require(_a != address(0), "bud/no-contract-0");
         require(bud[_a] == 0, "bud/approved");
+        // stop new address addition when a guarantee is in place
+        require(withdrawalConditionSatisfied(), "withdraw-condition-not-satisfied");
+
         bud[_a] = 1;
         emit Kiss(_a);
     }
@@ -164,9 +168,12 @@ contract Gate1 {
     /// Returns false when vat.suck call fails or draw limit check fails
     /// @dev Does not revert when vat.suck fails to ensure gate can try alternate draw paths
     /// @dev and determine best course of action, ex: try backup balance
+    /// @dev Fails after emergency shutdown is triggered
     /// @param amount_ dai amount to draw from a vat.suck() call
     /// @return status
     function accessSuck(uint256 amount_) internal returns (bool) {
+        require(VatAbstract(vat).live() == 1, "Vat/not-live"); // vat should be live
+
         // ensure approved total to access vat.suck is greater than draw amount requested
         bool drawLimitCheck = (approvedTotal >= amount_);
 
@@ -269,14 +276,5 @@ contract Gate1 {
         withdrawAfter = newWithdrawAfter;
 
         emit NewWithdrawAfter(newWithdrawAfter);
-    }
-
-    // --- Vat Forwarders ---
-    /// Forward vat.heal() call
-    /// @dev Access to vat.heal() can be used appropriately by an integration
-    /// @dev when it maintains its own sin balance
-    /// @param rad dai amount
-    function heal(uint rad) external {
-        VatAbstract(vat).heal(rad);
     }
 }
