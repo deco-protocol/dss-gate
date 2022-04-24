@@ -1,5 +1,5 @@
-all             :; forge build
-clean           :; forge clean
-                    # Usage example: make test match=SpellIsCast
-test            :; ./test-dss-gate.sh
-deploy          :; make && forge create Gate1
+all             :; dapp build
+clean           :; dapp clean
+                    # Usage example: make test match=Withdraw
+test            :; make && ./test-dss-gate.sh $(match)
+deploy          :; make && dapp create Gate1 $(vow)

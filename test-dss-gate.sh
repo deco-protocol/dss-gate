@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-[[ "$(seth chain --rpc-url="$ETH_RPC_URL")" == "ethlive" ]] || { echo "Please set a mainnet ETH_RPC_URL"; exit 1; }
+[[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || { echo "Please set a mainnet ETH_RPC_URL"; exit 1; }
 
+export DAPP_BUILD_OPTIMIZE=1
+export DAPP_BUILD_OPTIMIZE_RUNS=200
 
-forge test --fork-url "$ETH_RPC_URL" --force
+if [[ -z "$1" ]]; then
+  dapp --use solc:0.8.7 test --rpc-url="$ETH_RPC_URL" -v
+else
+  dapp --use solc:0.8.7 test --rpc-url="$ETH_RPC_URL" --match "$1" -vv
+fi

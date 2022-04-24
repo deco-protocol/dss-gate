@@ -19,7 +19,11 @@ contract TestVat is Vat {
 }
 
 contract MockVow {
-    constructor() {}
+    address public vat;
+
+    constructor(address vat_) {
+        vat = vat_;
+    }
 }
 
 contract Integration {
@@ -96,8 +100,8 @@ contract DeployGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new Vat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -143,8 +147,8 @@ contract IntegrationAuthDeniedGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new Vat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -211,8 +215,8 @@ contract IntegrationAuthApprovedGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new Vat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -317,8 +321,8 @@ contract DaiBalanceGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new TestVat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -366,8 +370,8 @@ contract MaxDrawGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new TestVat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -432,8 +436,8 @@ contract ApprovedTotalUpdateGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new TestVat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -503,8 +507,8 @@ contract DaiDrawnGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new TestVat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -703,8 +707,8 @@ contract DaiWithdrawnGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new TestVat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);
@@ -802,8 +806,8 @@ contract WithdrawAfterUpdateGate1Test is DSTest, DSMath {
 
         me = address(this);
         vat = new TestVat();
-        vow = new MockVow();
-        gate = new Gate1(address(vat), address(vow));
+        vow = new MockVow(address(vat));
+        gate = new Gate1(address(vow));
         vat.rely(address(gate));
 
         gov = new Gov(gate);

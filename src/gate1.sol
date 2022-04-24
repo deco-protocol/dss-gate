@@ -24,6 +24,10 @@ abstract contract VatAbstract {
     function move(address, address, uint256) external virtual;
 }
 
+abstract contract VowAbstract {
+    function vat() external virtual view returns (address);
+}
+
 /**
  @title Gate 1 "Simple Gate"
  @author Vamsi Alluri
@@ -102,11 +106,11 @@ contract Gate1 {
     /// withdraw condition- timestamp after which backup dai balance withdrawal is allowed
     uint256 public withdrawAfter; // [timestamp]
 
-    constructor(address vat_, address vow_) {
+    constructor(address vow_) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
 
-        vat = vat_; // set vat address
+        vat = VowAbstract(vow_).vat(); // set vat address
         vow = vow_; // set vow address
 
         withdrawAfter = block.timestamp; // set withdrawAfter to now
