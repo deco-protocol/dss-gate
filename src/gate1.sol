@@ -56,7 +56,6 @@ abstract contract VatAbstract {
   * integrates with dai balance on vat, which uses the dsmath rad number type- 45 decimal fixed-point number
 
  MISCELLANEOUS
-  * does not execute vow.heal to ensure the dai draw amount from vat.suck is lower than the surplus buffer currently held in vow
   * does not check whether vat is live at deployment time
   * vat, and vow addresses cannot be updated after deployment
 */
@@ -165,35 +164,32 @@ contract Gate1 {
 
     /// Draw limit implementation
     /// Returns true upon successful vat.suck call
-    /// Returns false when vat.suck call fails or draw limit check fails
+    /// Returns false when vat is not live or vat.suck call fails or draw limit check fails
     /// @dev Does not revert when vat.suck fails to ensure gate can try alternate draw paths
     /// @dev and determine best course of action, ex: try backup balance
-    /// @dev Fails after emergency shutdown is triggered
     /// @param amount_ dai amount to draw from a vat.suck() call
     /// @return status
     function accessSuck(uint256 amount_) internal returns (bool) {
-        require(VatAbstract(vat).live() == 1, "Vat/not-live"); // vat should be live
+        // vat live status
+        bool vatLive = (VatAbstract(vat).live() == 1);
 
         // ensure approved total to access vat.suck is greater than draw amount requested
         bool drawLimitCheck = (approvedTotal >= amount_);
 
-        if(drawLimitCheck) { // check passed
+        if(vatLive && drawLimitCheck) { // checks passed
             // decrease approvedTotal by draw amount
             approvedTotal = approvedTotal - amount_;
 
             // call suck to transfer dai from vat to this gate contract
             try VatAbstract(vat).suck(address(vow), address(this), amount_) {
-                // optional: can call vow.heal(amount_) here to ensure
-                // surplus buffer has sufficient dai balance
-
                 // accessSuck success- successful vat.suck execution for requested amount
                 return true;
             } catch {
                 // accessSuck failure-  failed vat.suck call
                 return false;
             }
-        } else { // check failed
-            // accessSuck failure- insufficient draw limit(approvedTotal)
+        } else { // checks failed
+            // accessSuck failure- vat not live or insufficient draw limit(approvedTotal)
             return false;
         }
     }

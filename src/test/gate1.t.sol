@@ -540,7 +540,18 @@ contract DaiDrawnGate1Test is DSTest, DSMath {
         assertEq(vat.dai(address(gate)), rad(40));
     }
 
-    // draw succeeds with suck when backup balance is zero
+    // draw succeeds without suck when backup balance is present and vat is not live
+    function testBackupBalanceVatNotLive() public {
+        vat.deny(address(gate)); // no auth, force backup balance usage
+        vat.move(me, address(gate), rad(50)); // backup balance: 50
+
+        vat.try_cage(); // vat not live, force backup balance usage
+
+        user1.draw(rad(10)); // draw: 10
+        assertEq(vat.dai(address(gate)), rad(40));
+    }
+
+    // draw succeeds with suck when backup balance is present
     function testBackupBalanceZero() public {
         gov.updateApprovedTotal(rad(25)); // draw limit approved total: 25
         vat.move(me, address(gate), rad(50)); // backup balance: 50
@@ -649,6 +660,18 @@ contract DaiDrawnGate1Test is DSTest, DSMath {
     function testDrawBackupBalanceExceedsApprovedTotal() public {
         gov.updateApprovedTotal(rad(10)); // draw limit approved total: 10
         vat.move(me, address(gate), rad(50)); // backup balance: 50
+
+        user1.draw(rad(25)); // draw: 25
+        assertEq(gate.approvedTotal(), rad(10));  // approved total unchanged
+        assertEq(vat.dai(address(gate)), rad(25)); // backup balance: 25
+    }
+
+    // should draw from backup balance when amount is beyond draw limit and vat not live
+    function testDrawBackupBalanceExceedsApprovedTotalVatNotLive() public {
+        gov.updateApprovedTotal(rad(10)); // draw limit approved total: 10
+        vat.move(me, address(gate), rad(50)); // backup balance: 50
+
+        vat.try_cage();
 
         user1.draw(rad(25)); // draw: 25
         assertEq(gate.approvedTotal(), rad(10));  // approved total unchanged
