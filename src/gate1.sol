@@ -77,8 +77,8 @@ contract Gate1 {
 
     // --- Integration Access Control ---
     mapping (address => uint256) public bud;
-    event Kiss(address a);
-    event Diss(address a);
+    event Kiss(address indexed a);
+    event Diss(address indexed a);
     function kiss(address _a) external auth {
         require(_a != address(0), "bud/no-contract-0");
         require(bud[_a] == 0, "bud/approved");
@@ -120,9 +120,8 @@ contract Gate1 {
     }
 
     // --- Events ---
-    event NewApprovedTotal(uint256 amount_); // log when approved total changes
-    event Draw(address indexed dst_, uint256 amount_, bool accessSuckStatus); // log upon draw
-    event NewWithdrawAfter(uint256 timestamp_); // logs new withdraw expiry timestamp
+    event File(bytes32 indexed what, uint256 data);
+    event Draw(address indexed dst_, bool indexed accessSuckStatus, uint256 amount_); // log upon draw
     event Withdraw(uint256 amount_); // logs amount withdrawn from backup balance
 
     // --- UTILS ---
@@ -135,6 +134,27 @@ contract Gate1 {
     function _max(uint x, uint y) internal pure returns (uint z) {
         return x <= y ? y : x;
     }
+
+    // --- File Data ---
+    /// Update draw limit and withdrawAfter timestamp
+    /// @dev Restricted to authorized governance addresses
+    /// @param what what value are we updating
+    /// @param data what are we updating it to
+    function file(bytes32 what, uint256 data) external auth {
+        if (what == "approvedtotal") {
+            approvedTotal = data; // update approved total amount
+            emit File(what, data);
+        } else if (what == "withdrawafter") {
+            // can only set withdrawAfter to a higher timestamp
+            require(data > withdrawAfter, "withdrawAfter/value-lower");
+            
+            withdrawAfter = data; // update approved total amount
+            emit File(what, data);
+        } else revert("gate/file-not-recognized");
+    }
+
+    // event NewApprovedTotal(uint256 amount_); // log when approved total changes
+    // event NewWithdrawAfter(uint256 timestamp_); // logs new withdraw expiry timestamp
 
     /// Transfer dai balance from gate to destination address
     /// @param dst_ destination address
@@ -156,16 +176,6 @@ contract Gate1 {
     }
 
     // --- Draw Limits ---
-    /// Update draw limit
-    /// @dev Restricted to authorized governance addresses
-    /// @dev Approved total can be updated to both a higher or lower value
-    /// @param newTotal_ Updated approved total amount
-    function updateApprovedTotal(uint256 newTotal_) external auth {
-        approvedTotal = newTotal_; // update approved total amount
-
-        emit NewApprovedTotal(newTotal_);
-    }
-
     /// Draw limit implementation
     /// Returns true upon successful vat.suck call
     /// Returns false when vat is not live or vat.suck call fails or draw limit check fails
@@ -214,7 +224,7 @@ contract Gate1 {
         // transfer amount to the input destination address
         transferDai(dst_, amount_);
 
-        emit Draw(dst_, amount_, suckStatus); // suckStatus logs whether suck(true) or backup balance(false) was used
+        emit Draw(dst_, suckStatus, amount_); // suckStatus logs whether suck(true) or backup balance(false) was used
     }
 
     /// Draw function
@@ -265,16 +275,5 @@ contract Gate1 {
         transferDai(dst_, amount_); // withdraw dai to governance address
 
         emit Withdraw(amount_);
-    }
-
-    /// Update withdrawAfter timestamp
-    /// Can only set withdrawAfter to a higher timestamp
-    /// @dev Restricted to authorized governance addresses
-    /// @param newWithdrawAfter New timestamp to set
-    function updateWithdrawAfter(uint256 newWithdrawAfter) external auth {
-        require(newWithdrawAfter > withdrawAfter, "withdrawAfter/value-lower");
-        withdrawAfter = newWithdrawAfter;
-
-        emit NewWithdrawAfter(newWithdrawAfter);
     }
 }

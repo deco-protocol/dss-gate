@@ -67,7 +67,7 @@ contract Gov {
     }
 
     function updateApprovedTotal(uint256 newTotal_) public {
-        gate.updateApprovedTotal(newTotal_);
+        gate.file("approvedtotal", newTotal_);
     }
 
     function withdrawDai(address dst_, uint256 amount_) public {
@@ -75,7 +75,7 @@ contract Gov {
     }
 
     function updateWithdrawAfter(uint256 newWithdrawAfter) public {
-        gate.updateWithdrawAfter(newWithdrawAfter);
+        gate.file("withdrawafter", newWithdrawAfter);
     }
 }
 
@@ -459,7 +459,7 @@ contract ApprovedTotalUpdateGate1Test is DSTest, DSMath {
         // vm.expectRevert("gate1/not-authorized");
 
         // unauthorized address
-        gate.updateApprovedTotal(rad(999));
+        gate.file("approvedtotal", rad(999));
     }
 
     // should succeed if address is gov
@@ -833,7 +833,7 @@ contract WithdrawAfterUpdateGate1Test is DSTest, DSMath {
         // vm.expectRevert("gate1/not-authorized");
         
         // call from unauthorized address
-        gate.updateWithdrawAfter(1641500000);
+        gate.file("withdrawafter", 1641500000);
     }
 
     // should pass if caller is gov
