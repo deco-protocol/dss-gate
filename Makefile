@@ -1,5 +1,16 @@
+# Build
 all             :; dapp build
+
+# Clean
 clean           :; dapp clean
-                    # Usage example: make test match=Withdraw
-test            :; make && ./test-dss-gate.sh $(match)
+
+# Deployment
 deploy          :; make && dapp create Gate1 $(vow)
+
+# Testing
+
+## Unit Tests
+test            :; make && ./test-dss-gate.sh $(match)
+
+## Fuzz/Invariant tests - Echidna
+echidna-dss-gate :; ./echidna/echidna.sh
