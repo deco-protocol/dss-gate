@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Instructions to setup and run ECHIDNA tests of dss-gate
 
 ## Pre-requisites
@@ -19,6 +20,7 @@ Follow instructions based on your Operating System : https://docs.docker.com/get
 
 `docker pull trailofbits/eth-security-toolbox`
 
+<<<<<<< HEAD
 - Change to dss-gate directory
 
 `cd .../dss-gate`
@@ -27,6 +29,7 @@ Follow instructions based on your Operating System : https://docs.docker.com/get
 
 `docker run -it -v "$PWD":/home/training trailofbits/eth-security-toolbox`
 
+<<<<<<< HEAD
 Note : Make sure you run this command when your pwd is set to cloned repo folder(i.e dss-gate). This will enable you to access all the files and folders in the current working directory inside the container under `/home/training` folder.
 
 Yay !! Setup is complete
