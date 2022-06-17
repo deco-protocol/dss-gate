@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./gate1.sol";
+import "../src/gate1.sol";
 import "./DsMath.sol";
 import "./Vm.sol";
 import "./MockVow.sol";
