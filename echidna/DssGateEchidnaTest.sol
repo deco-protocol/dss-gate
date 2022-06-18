@@ -8,7 +8,6 @@ import "./Vm.sol";
 import "./MockVow.sol";
 import "./TestVat.sol";
 
-
 contract DssGateEchidnaTest  {
 
     Vm public vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -18,6 +17,8 @@ contract DssGateEchidnaTest  {
     TestVat public vat;
     Gate1 public gate;
     MockVow public vow;
+
+
 
     constructor() {
         vm.warp(1641400537);
@@ -52,6 +53,26 @@ contract DssGateEchidnaTest  {
                 gate.wards(msg.sender) == 0 && cmpStr(error_message, "gate1/not-authorized") ||
                 gate.bud(integ) == 0 && cmpStr(error_message, "bud/not-approved")
             );
+        }
+    }
+
+    function test_file(bytes32 key, uint256 value) public {
+
+        try gate.file(key, value) {
+            if (key == "approvedtotal") {
+                assert(gate.approvedTotal() == value);
+            }
+            if (key == "withdrawafter") {
+                assert(gate.withdrawAfter() == value);
+            }
+        } catch Error(string memory error_message) {
+            assert(
+                gate.wards(msg.sender) == 0 && cmpStr(error_message, "gate1/not-authorized") ||
+                (key != "approvedtotal" || key != "withdrawafter") && cmpStr(error_message, "gate/file-not-recognized") ||
+                (key == "withdrawafter" && value <= gate.withdrawAfter()) && cmpStr(error_message, "withdrawAfter/value-lower")
+            );
+        } catch {
+            assert(false);
         }
     }
 
