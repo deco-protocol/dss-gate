@@ -38,4 +38,8 @@ contract TestVat is Vat {
         dai[usr] += rad;
         debt += rad;
     }
+
+    function shutdown() public {
+        live = 0;
+    }
 }
