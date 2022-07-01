@@ -12,6 +12,8 @@ import "./TestIntegration.sol";
 
 contract DssGateEchidnaTest is DSMath {
 
+    event MyMessage(string message);
+
     Vm public vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
     address public vow_addr;
     address public me;
@@ -40,7 +42,7 @@ contract DssGateEchidnaTest is DSMath {
 
 
     }
-
+/*
     function test_rely(address user) public {
         try gate.rely(user){
             assert(gate.wards(user) == 1);
@@ -99,13 +101,42 @@ contract DssGateEchidnaTest is DSMath {
             assert(false);
         }
     }
+*/
+    function test_suck(address from, address to, uint256 amount) public {
+
+        govUser.kiss(address(integration)); // kiss integration
+        uint256 backupBalance = vat.dai(address(gate));
+        uint256 preApprovedTotal = gate.approvedTotal();
+
+        try integration.suck(from, to, amount){
+
+            // if backup balance is used
+            if(backupBalance != vat.dai(address(gate))) {
+                assert(backupBalance == vat.dai(address(gate)) + amount);
+            }
+
+            // if approved total is used
+           else if ( preApprovedTotal != gate.approvedTotal()) {
+                assert(preApprovedTotal == gate.approvedTotal() + amount);
+            }
+
+        } catch Error(string memory error_message) {
+            assert(
+                gate.bud(address(gate)) == 0 && cmpStr(error_message, "bud/not-authorized") ||
+                gate.daiBalance() < amount && cmpStr(error_message, "gate/insufficient-dai-balance") ||
+                from == address(0) && cmpStr(error_message, "bud/no-contract-0")
+            );
+        } catch {
+            assert(false);
+        }
+    }
 
     function test_daiBalance(uint256 amount) public {
         uint256 preBalance = gate.daiBalance();
         vat.mint(address(gate), amount);
         assert (preBalance + amount == gate.daiBalance());
     }
-
+/*
     function test_maxDrawAmount() public view {
         assert( gate.maxDrawAmount() == max(gate.approvedTotal(), gate.daiBalance()));
     }
@@ -159,6 +190,7 @@ contract DssGateEchidnaTest is DSMath {
             assert(false);
         }
     }
+    */
 
     function test_helper_vat_mint(uint256 amount) public {
         vat.mint(address(gate), rad(amount));
