@@ -8,7 +8,6 @@ import "./Vm.sol";
 import "./MockVow.sol";
 import "./TestVat.sol";
 import "./TestGovUser.sol";
-
 import "./TestIntegration.sol";
 
 contract DssGateEchidnaTest is DSMath {
@@ -16,11 +15,13 @@ contract DssGateEchidnaTest is DSMath {
     Vm public vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
     address public vow_addr;
     address public me;
+    address public integration_addr;
 
     TestVat public vat;
     Gate1 public gate;
     MockVow public vow;
     TestGovUser public govUser;
+    TestIntegration public integration;
 
     constructor() {
         vm.warp(1641400537);
@@ -30,9 +31,13 @@ contract DssGateEchidnaTest is DSMath {
         vow = new MockVow(address(vat));
         gate = new Gate1(address(vow));
         govUser = new TestGovUser(gate);
+        integration = new TestIntegration(gate);
+
+        integration_addr = address(integration);
 
         vat.rely(address(gate)); // vat rely gate
         gate.rely(address(govUser)); // gate rely gov
+
 
     }
 
@@ -96,10 +101,9 @@ contract DssGateEchidnaTest is DSMath {
     }
 
     function test_daiBalance(uint256 amount) public {
-
         uint256 preBalance = gate.daiBalance();
-        vat.mint(address(gate), rad(amount));
-        assert (preBalance + rad(amount) == gate.daiBalance());
+        vat.mint(address(gate), amount);
+        assert (preBalance + amount == gate.daiBalance());
     }
 
     function test_maxDrawAmount() public view {
@@ -108,14 +112,15 @@ contract DssGateEchidnaTest is DSMath {
 
     function test_draw(uint256 amount) public {
 
-        uint256 preBalanceInteg = vat.dai(msg.sender);
+        govUser.kiss(integration_addr);
         uint256 backupBalance = vat.dai(address(gate));
         uint256 preApprovedTotal = gate.approvedTotal();
 
-        try gate.draw(rad(amount)) {
+        if (gate.daiBalance() < amount) {
+            return ;
+        }
 
-            // Sender (dest) receives DAI
-            assert(preBalanceInteg + rad(amount) == vat.dai(msg.sender));
+        try integration.draw(amount) {
 
             // backup balance unused when drawlimit is available
             if (backupBalance == vat.dai(address(gate))) {
@@ -138,15 +143,17 @@ contract DssGateEchidnaTest is DSMath {
         }
     }
 
-    function test_withdrawdai(address dest, uint256 amount) public {
+    function test_withdrawdai(uint256 amount) public {
 
-        uint256 preDestBal = vat.dai(dest);
-        try govUser.withdrawDai(dest, amount) {
-            assert(vat.dai(dest) == preDestBal + amount);
+        uint256 destBalance = vat.dai(address(govUser));
+
+        try govUser.withdrawDai(address(govUser), amount) {
+            assert(vat.dai(address(govUser)) == destBalance + amount);
         }catch Error(string memory error_message) {
             assert(
                 gate.wards(msg.sender) == 0 && cmpStr(error_message, "gate1/not-authorized") ||
-                gate.daiBalance() < amount && cmpStr(error_message, "gate/insufficient-dai-balance")
+                gate.daiBalance() < amount && cmpStr(error_message, "gate/insufficient-dai-balance") ||
+                block.timestamp < gate.withdrawAfter() && cmpStr(error_message, "withdraw-condition-not-satisfied")
             );
         } catch {
             assert(false);
