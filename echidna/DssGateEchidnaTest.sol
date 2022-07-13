@@ -42,7 +42,7 @@ contract DssGateEchidnaTest is DSMath {
 
 
     }
-/*
+
     function test_rely(address user) public {
         try gate.rely(user){
             assert(gate.wards(user) == 1);
@@ -101,7 +101,7 @@ contract DssGateEchidnaTest is DSMath {
             assert(false);
         }
     }
-*/
+
     function test_suck(address from, address to, uint256 amount) public {
 
         govUser.kiss(address(integration)); // kiss integration
@@ -136,7 +136,7 @@ contract DssGateEchidnaTest is DSMath {
         vat.mint(address(gate), amount);
         assert (preBalance + amount == gate.daiBalance());
     }
-/*
+
     function test_maxDrawAmount() public view {
         assert( gate.maxDrawAmount() == max(gate.approvedTotal(), gate.daiBalance()));
     }
@@ -190,7 +190,6 @@ contract DssGateEchidnaTest is DSMath {
             assert(false);
         }
     }
-    */
 
     function test_helper_vat_mint(uint256 amount) public {
         vat.mint(address(gate), rad(amount));
