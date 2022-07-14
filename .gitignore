@@ -1,4 +1,6 @@
 /out
 /cache
 .DS_Store
+./corups
+./echidna/crytic-export
 /node_modules
