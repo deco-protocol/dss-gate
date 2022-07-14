@@ -55,13 +55,13 @@ contract DssGateEchidnaTest is DSMath {
 
     constructor() {
         vm.warp(1641400537);
-        me = address(this);
+        me               = address(this);
 
-        vat = new TestVat();
-        vow = new MockVow(address(vat));
-        gate = new Gate1(address(vow));
-        govUser = new TestGovUser(gate);
-        integration = new TestIntegration(gate);
+        vat              = new TestVat();
+        vow              = new MockVow(address(vat));
+        gate             = new Gate1(address(vow));
+        govUser          = new TestGovUser(gate);
+        integration      = new TestIntegration(gate);
 
         integration_addr = address(integration);
 
