@@ -77,8 +77,9 @@ contract DssGateEchidnaTest is DSMath {
     // --- Echidna Test : file(what, data) ---
     /// @param key Name of configurable params. (approvedTotal or withdrawAfter)
     /// @param value value for the params
-    /// @dev Invariant : Only authorized wards can call file() function
-    /// @dev Invariant : The value for 'withdrawafter' key should always be greater than existing value.
+    /// @dev Invariant : gate.approvedTotal and gate.withdrawAfter will be set to value
+    /// @dev Access Invariant : Only authorized wards can call file() function
+    /// @dev Conditional Invariant : The value for 'withdrawafter' key should always be greater than existing value.
     function test_file(bytes32 key, uint256 value) public {
 
         try govUser.file(key, value) {
@@ -101,8 +102,8 @@ contract DssGateEchidnaTest is DSMath {
 
     // --- Echidna Test : rely(usr) ---
     /// @param user An ward address. Upon rely, the user will be added to authorized ward list.
-    /// @dev Invariant :
-    /// @dev Access Invariant : Only authorized wards can call file() function
+    /// @dev Invariant : A new user is added as admin
+    /// @dev Access Invariant : Only authorized wards can invoke file() function
     function test_rely(address user) public {
         try gate.rely(user){
             assert(gate.wards(user) == 1);
@@ -118,9 +119,9 @@ contract DssGateEchidnaTest is DSMath {
     // --- Echidna Test : kiss(integ) ---
     /// @param integ An integration to be authorized to suck from gate (via vat)
     /// @dev Invariant : The address of integration must be added to buds.
-    /// @dev Invariant : An existing authorized ward can add a new integration
-    /// @dev Invariant : address(0) cannot be added as integration
-    /// @dev Invariant : Cannot add new integration after withdrawAfter is passed.
+    /// @dev Access Invariant : Only An existing authorized ward can add a new integration
+    /// @dev Conditional Invariant : address(0) cannot be added as integration
+    /// @dev Conditional Invariant : Cannot add new integration after withdrawAfter is passed.
     function test_kiss(address integ) public {
         try govUser.kiss(integ) {
             assert(gate.bud(integ) == 1);
@@ -139,7 +140,7 @@ contract DssGateEchidnaTest is DSMath {
     // --- Echidna Test : diss(integ) ---
     /// @param integ An existing integration will be removed from gate authorized list.
     /// @dev Invariant : Verify the integration is removed from buds.
-    /// @dev Access Invariant : An only existing authorized ward can remove
+    /// @dev Access Invariant : An only existing authorized ward can remove integration
     function test_diss(address integ) public {
 
         try govUser.diss(integ) {
@@ -189,12 +190,6 @@ contract DssGateEchidnaTest is DSMath {
         } catch {
             assert(false);
         }
-    }
-
-    // --- Echidna Test : maxDrawAmount() ---
-    /// @dev Invariant : Returns the maximum permitted draw amount from all sources.
-    function test_maxDrawAmount() public view {
-        assert( gate.maxDrawAmount() == max(gate.approvedTotal(), gate.daiBalance()));
     }
 
     // --- Echidna Test : draw(amount) ---
@@ -254,6 +249,12 @@ contract DssGateEchidnaTest is DSMath {
         } catch {
             assert(false);
         }
+    }
+
+   // --- Echidna Test : maxDrawAmount() ---
+    /// @dev Invariant : Returns the maximum permitted draw amount from all sources.
+    function test_maxDrawAmount() public view {
+        assert( gate.maxDrawAmount() == max(gate.approvedTotal(), gate.daiBalance()));
     }
 
     // ---  Test Helper : vat.mint(integ) ---
