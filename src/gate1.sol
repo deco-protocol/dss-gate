@@ -18,7 +18,6 @@ pragma solidity ^0.8.0;
 
 abstract contract VatAbstract {
     function live() external virtual view returns (uint256);
-    function heal(uint256) external virtual;
     function suck(address, address, uint256) external virtual;
     function dai(address) external virtual view returns (uint256);
     function move(address, address, uint256) external virtual;
@@ -71,7 +70,7 @@ contract Gate1 {
     function rely(address _usr) external auth { wards[_usr] = 1; emit Rely(_usr); }  // Add admin
     function deny(address _usr) external auth { wards[_usr] = 0; emit Deny(_usr); }  // Remove admin
     modifier auth {
-        require(wards[msg.sender] == 1, "gate1/not-authorized");
+        require(wards[msg.sender] == 1, "gate/not-authorized");
         _;
     }
 
@@ -83,7 +82,7 @@ contract Gate1 {
         require(_a != address(0), "bud/no-contract-0");
         require(bud[_a] == 0, "bud/approved");
         // stop new address addition when a guarantee is in place
-        require(withdrawalConditionSatisfied(), "withdraw-condition-not-satisfied");
+        require(withdrawalConditionSatisfied(), "bud/rejected-past-withdrawafter");
 
         bud[_a] = 1;
         emit Kiss(_a);
@@ -147,8 +146,8 @@ contract Gate1 {
         } else if (what == "withdrawafter") {
             // can only set withdrawAfter to a higher timestamp
             require(data > withdrawAfter, "withdrawAfter/value-lower");
-            
-            withdrawAfter = data; // update approved total amount
+
+            withdrawAfter = data; // set withdrawafter timestamp
             emit File(what, data);
         } else revert("gate/file-not-recognized");
     }
